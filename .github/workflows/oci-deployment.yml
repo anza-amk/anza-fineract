@@ -53,12 +53,12 @@ jobs:
       - name: 'Currently running services'
         run: kubectl -n paymenthub-ns get pods
 
-      - name: Login to Docker registry
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ secrets.DOCKER_URL }}
-          username: ${{ secrets.OCI_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.OCI_DOCKERHUB_PASSWORD }}
+#      - name: Login to Docker registry
+#        uses: docker/login-action@v2
+#        with:
+#          registry: ${{ secrets.DOCKER_URL }}
+#          username: ${{ secrets.OCI_DOCKERHUB_USERNAME }}
+#          password: ${{ secrets.OCI_DOCKERHUB_PASSWORD }}
 
       - name: Build the image
         run: ./gradlew --no-daemon --console=plain :fineract-provider:clean :fineract-provider:compileJava :fineract-provider:jibDockerBuild -x test -x cucumber
