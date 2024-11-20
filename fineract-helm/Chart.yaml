@@ -1,0 +1,11 @@
+apiVersion: v1
+appVersion: "1.0.0"
+description: Fineract Engine
+name: fineract-helm
+version: 1.0.0-SNAPSHOT
+#dependencies:
+#- name: mysql
+#  version: 9.18.0
+#  repository: "https://charts.bitnami.com/bitnami"
+#  alias: mysql
+#  condition: mariadb.enabled, mysql.enabled

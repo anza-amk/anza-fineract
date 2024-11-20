@@ -1,0 +1,339 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements. See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership. The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License. You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+{{- if .Values.fineract.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: fineract-svc
+  labels:
+    app.kubernetes.io/name: fineract-server
+#  annotations:
+#    cloud.google.com/neg: '{"ingress": true}'
+spec:
+  ports:
+    - name: 443-8080
+      protocol: TCP
+      port: {{ .Values.fineract.env.CONTAINER_PORT }}
+      targetPort: {{ .Values.fineract.env.FINERACT_SERVER_PORT }}
+      nodePort: 30944
+#    - name: 80-8089
+#      protocol: TCP
+#      port: 80
+#      targetPort: 80
+#      nodePort: 30748
+  selector:
+    app.kubernetes.io/name: fineract-server
+#    tier: backend
+  type: NodePort
+#  loadBalancerIP: 140.238.98.195
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fineract-server
+  labels:
+    app.kubernetes.io/name: fineract-server
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: fineract-server
+#      tier: backend
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fineract-server
+#        tier: backend
+    spec:
+      containers:
+        - name: fineract-server
+          image: "{{ .Values.fineract.image }}"
+          imagePullPolicy: Always
+          resources:
+            limits:
+              cpu: "{{ .Values.fineract.resources.limits.cpu }}"
+              memory: "{{ .Values.fineract.resources.limits.memory }}"
+            requests:
+              cpu: "{{ .Values.fineract.resources.requests.cpu }}"
+              memory: "{{ .Values.fineract.resources.requests.memory }}"
+          livenessProbe:
+            httpGet:
+              path: /fineract-provider/actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 720
+            periodSeconds: 1
+          readinessProbe:
+            httpGet:
+              path: /fineract-provider/actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 360
+            periodSeconds: 1
+          env:
+#            - name: FINERACT_SERVER_PORT
+#              value: {{ .Values.fineract.env.FINERACT_SERVER_PORT }}
+            - name: FINERACT_NODE_ID
+              value: '{{ .Values.fineract.env.FINERACT_NODE_ID }}'
+            - name: FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME
+              value: "{{ .Values.fineract.env.FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME }}"
+            - name: FINERACT_HIKARI_JDBC_URL
+              value: "{{ .Values.fineract.env.FINERACT_HIKARI_JDBC_URL }}"
+            - name: FINERACT_HIKARI_USERNAME
+              value: "{{ .Values.fineract.env.FINERACT_HIKARI_USERNAME }}"
+            - name: FINERACT_HIKARI_PASSWORD
+              value: "{{ .Values.fineract.env.FINERACT_HIKARI_PASSWORD }}"
+            - name: FINERACT_DEFAULT_TENANTDB_HOSTNAME
+              value: "{{ .Values.fineract.env.FINERACT_DEFAULT_TENANTDB_HOSTNAME }}"
+            - name: FINERACT_DEFAULT_TENANTDB_PORT
+              value: "{{ .Values.fineract.env.FINERACT_DEFAULT_TENANTDB_PORT }}"
+            - name: FINERACT_DEFAULT_TENANTDB_IDENTIFIER
+              value: "{{ .Values.fineract.env.FINERACT_DEFAULT_TENANTDB_IDENTIFIER }}"
+            - name: FINERACT_DEFAULT_TENANTDB_NAME
+              value: "{{ .Values.fineract.env.FINERACT_DEFAULT_TENANTDB_NAME }}"
+            - name: FINERACT_DEFAULT_TENANTDB_UID
+              value: "{{ .Values.fineract.env.FINERACT_DEFAULT_TENANTDB_UID }}"
+            - name: FINERACT_DEFAULT_TENANTDB_PWD
+              value: "{{ .Values.fineract.env.FINERACT_DEFAULT_TENANTDB_PWD }}"
+            - name: FINERACT_DEFAULT_TENANTDB_CONN_PARAMS
+              value: "{{ .Values.fineract.env.FINERACT_DEFAULT_TENANTDB_CONN_PARAMS }}"
+            - name: FINERACT_DEFAULT_TENANTDB_RO_PORT
+              value: "{{ .Values.fineract.env.FINERACT_DEFAULT_TENANTDB_PORT }}"
+            - name: FINERACT_DEFAULT_TENANTDB_RO_HOSTNAME
+              value: "{{ .Values.fineract.env.FINERACT_DEFAULT_TENANTDB_HOSTNAME }}"
+            - name: FINERACT_DEFAULT_TENANTDB_RO_UID
+              value: "{{ .Values.fineract.env.FINERACT_DEFAULT_TENANTDB_UID }}"
+            - name: FINERACT_DEFAULT_TENANTDB_RO_PWD
+              value: "{{ .Values.fineract.env.FINERACT_DEFAULT_TENANTDB_PWD }}"
+            - name: FINERACT_DEFAULT_TENANTDB_RO_NAME
+              value: "{{ .Values.fineract.env.FINERACT_DEFAULT_TENANTDB_NAME }}"
+            - name: FINERACT_DEFAULT_TENANTDB_RO_CONN_PARAMS
+              value: "{{ .Values.fineract.env.FINERACT_DEFAULT_TENANTDB_CONN_PARAMS }}"
+            - name: "FINERACT_SECURITY_BASICAUTH_ENABLED"
+              value: 'true'
+            - name: "FINERACT_SECURITY_OAUTH_ENABLED"
+              value: 'false'
+          ports:
+            - containerPort: {{ .Values.fineract.env.FINERACT_SERVER_PORT }}
+              name: fineract-server
+          lifecycle:
+            preStop:
+              exec:
+                command: ['sh', '-c', '{{ .Values.fineract.preStopScript}}']
+      imagePullSecrets:
+        - name: ghcr-secret
+
+#      - name: cloud-sql-proxy
+#        # It is recommended to use the latest version of the Cloud SQL Auth Proxy
+#        # Make sure to update on a regular schedule!
+#        image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.11.4
+#        args:
+#          # If connecting from a VPC-native GKE cluster, you can use the
+#          # following flag to have the proxy connect over private IP
+#          # - "--private-ip"
+#
+#          # Enable structured logging with LogEntry format:
+#          - "--structured-logs"
+#
+#          # Replace DB_PORT with the port the proxy should listen on
+#          - "--port=3306"
+#          - "mali-434814:us-central1:mali-instance-dbfb2e8d"
+#
+#        securityContext:
+#          # The default Cloud SQL Auth Proxy image runs as the
+#          # "nonroot" user and group (uid: 65532) by default.
+#          runAsNonRoot: true
+#        # You should use resource requests/limits as a best practice to prevent
+#        # pods from consuming too many resources and affecting the execution of
+#        # other pods. You should adjust the following values based on what your
+#        # application needs. For details, see
+#        # https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+#        resources:
+#          requests:
+#            # The proxy's memory use scales linearly with the number of active
+#            # connections. Fewer open connections will use less memory. Adjust
+#            # this value based on your application's requirements.
+#            memory: "64Mi"
+#            # The proxy's CPU use scales linearly with the amount of IO between
+#            # the database and the application. Adjust this value based on your
+#            # application's requirements.
+#            cpu:    "50m"
+#          limits:
+#            memory: "128Mi"
+#            cpu: "100m"
+#        volumeMounts:
+#          - name: cloudsql-instance-credentials
+#            mountPath: /secrets/cloudsql
+#            readOnly: true
+#          - name: mysql-initdb
+#            mountPath: /docker-entrypoint-initdb.d
+#      volumes:
+#        - name: cloudsql-instance-credentials
+#          secret:
+#            secretName: fineract-tenants-db-secret
+#        - name: mysql-initdb
+#          configMap:
+#            name: mysql-preload-data-config
+# [END cloud_sql_proxy_k8s_container]
+
+---
+{{- if .Values.fineract.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fineract-ingress
+  annotations:
+{{- if .Values.fineract.ingress.annotations }}
+{{ toYaml .Values.fineract.ingress.annotations | indent 4 }}
+{{- end }}
+spec:
+#  ingressClassName: nginx
+  rules:
+  - host: "{{ .Values.fineract.ingress.hostname }}"
+    http:
+      paths:
+        - path: "{{ .Values.fineract.ingress.path }}"
+          pathType: Prefix
+          backend:
+            service:
+              name: fineract-svc
+              port:
+                number: {{ .Values.fineract.env.CONTAINER_PORT }}
+#  tls:
+#    - hosts:
+#      - api.vuna.io
+#      secretName: finercat-dev-tls-secret
+{{- end }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: fineract-tenants-db-secret
+type: Opaque
+data:
+  username: "cm9vdA=="
+  password: "RjFuMzdAY3RWdW40JA=="
+#---
+#apiVersion: v1
+#kind: ConfigMap
+#metadata:
+#  name: mysql-preload-data-config
+#  labels:
+#    name: mysql-data-store
+#    app: mysql-gke-deployment
+#  #namespace: development
+#data:
+#  init.sql: |
+#    CREATE DATABASE IF NOT EXISTS `fineract_tenants`;
+#    CREATE DATABASE IF NOT EXISTS `fineract_default`;
+#    GRANT ALL ON *.* TO 'root'@'%';
+#    GRANT ALL PRIVILEGES ON `fineract_tenants`.* TO 'mifos';
+#    GRANT ALL PRIVILEGES ON `fineract_default`.* TO 'mifos';
+#---
+#apiVersion: networking.gke.io/v1
+#kind: ManagedCertificate
+#metadata:
+#  name: fin-managed-ssl-certificate
+##  namespace: paymenthub-back-end
+#spec:
+# domains:
+#  - api.vuna.io
+
+#---
+#apiVersion: v1
+#kind: Secret
+#metadata:
+#  name: ocirsecret
+#  annotations:
+#    meta.helm.sh/release-name: "ph-ee-backend"  # Adjust this as per your release name
+#    meta.helm.sh/release-namespace: "paymenthub-ns"  # Adjust this as per your namespace
+#  labels:
+#    app.kubernetes.io/managed-by: "Helm"
+#type: kubernetes.io/dockerconfigjson
+#data:
+#  .dockerconfigjson: >-
+#    eyJhdXRocyI6eyJsaHIub2Npc...
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-dev
+  namespace: paymenthub-ns
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3306
+      targetPort: 3306
+
+---
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: mysql-dev
+  namespace: paymenthub-ns
+subsets:
+  - addresses:
+      - ip: 10.0.1.229
+    ports:
+      - port: 3306
+
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-issuer
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory  #prod environment
+#    server: https://acme-staging-v02.api.letsencrypt.org/directory # Use staging for testing
+    email: alex@vuna.io  # Replace with your email
+    privateKeySecretRef:
+      name: letsencrypt-issuer-key
+#  dnsConfig:
+#    namecheap:
+#      apiKey: "6f5de4dd0e7d4064a25b2a156455811f"
+#      username: "kimaniderrick"
+    solvers:
+      - http01:
+          ingress:
+            class: nginx  # Ensure this matches your Ingress class
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: fineract-cert
+  namespace: paymenthub-ns
+spec:
+  secretName: fineract-dev-tls-secret  # Ensure the secret name is correct
+  issuerRef:
+    name: letsencrypt-issuer  # Ensure this matches your ClusterIssuer name
+    kind: ClusterIssuer
+  commonName: api.vuna.io
+  dnsNames:
+    - api.vuna.io
+
+#---
+#apiVersion: networking.k8s.io/v1
+#kind: IngressClass
+#metadata:
+#  name: nginx
+#spec:
+#  controller: k8s.io/ingress-nginx
+{{- end }}

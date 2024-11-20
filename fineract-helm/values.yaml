@@ -1,0 +1,47 @@
+fineract:
+  enabled: true
+  DFSPIDS: ""
+  SPRING_PROFILES_ACTIVE: "test"
+  image: ""
+  spec:
+    template:
+      spec:
+        containers:
+  env:
+    FINERACT_DEFAULT_TENANTDB_IDENTIFIER: ""
+    FINERACT_DEFAULT_TENANTDB_NAME: ""
+    FINERACT_DEFAULT_TENANTDB_HOSTNAME: ""
+    FINERACT_DEFAULT_TENANTDB_PORT: 3306
+    FINERACT_HIKARI_PASSWORD: ""
+    FINERACT_DEFAULT_TENANTDB_PWD: ""
+    FINERACT_HIKARI_USERNAME: ""
+    FINERACT_ADMIN_USERNAME: ""
+    FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME: com.mysql.cj.jdbc.Driver
+    FINERACT_HIKARI_JDBC_URL: ""
+    FINERACT_SERVER_PORT: ""
+    CONTAINER_PORT: ""
+    FINERACT_NODE_ID: ""
+    FINERACT_DEFAULT_TENANTDB_UID: ""
+    FINERACT_DEFAULT_TENANTDB_CONN_PARAMS: ""
+  preStopScript: 'echo -e "******Fineract is stopping********";'
+  ingress:
+    enabled: true
+    hostname: api.vuna.io
+    path: "/fineract-provider"
+    annotations:
+      ingressClassName: nginx
+#      cert-manager.io/cluster-issuer: "letsencrypt-dev"
+#      acme.cert-manager.io/http01-edit-in-place: "true"
+#      nginx.ingress.kubernetes.io/whitelist-source-range: 0.0.0.0/0,::/0
+#      nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
+#      ingress.kubernetes.io/proxy-body-size: "0"
+#      ingress.kubernetes.io/ssl-redirect: "true"
+#      nginx.ingress.kubernetes.io/proxy-body-size: "0"
+#      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  resources:
+    limits:
+      cpu: "1500m"
+      memory: "8Gi"
+    requests:
+      cpu: "500m"
+      memory: "2Gi"
