@@ -1564,14 +1564,14 @@ public class CommandWrapperBuilder {
         return this;
     }
 
-    public CommandWrapperBuilder savingsAccountWithdrawal(SavingsAccountData savingsAccount) {
+    public CommandWrapperBuilder savingsAccountWithdrawal(final Long accountId, final Long officeId, final Long groupId) {
         this.actionName = "WITHDRAWAL";
         this.entityName = "SAVINGSACCOUNT";
-        this.savingsId = savingsAccount.getId();
+        this.savingsId = accountId;
         this.entityId = null;
-        this.href = "/savingsaccounts/" + savingsAccount.getId() + "/transactions";
-        this.groupId = savingsAccount.getGroupId();
-        this.officeId = savingsAccount.getOfficeId();
+        this.href = "/savingsaccounts/" + accountId + "/transactions";
+        this.groupId = groupId;
+        this.officeId = officeId;
         return this;
     }
 
