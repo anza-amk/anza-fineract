@@ -1560,6 +1560,8 @@ public class CommandWrapperBuilder {
         this.savingsId = accountId;
         this.entityId = null;
         this.href = "/savingsaccounts/" + accountId + "/transactions";
+        this.officeId = 2L;
+        this.groupId = 10L;
         return this;
     }
 
