@@ -56,6 +56,7 @@ import org.apache.fineract.infrastructure.core.serialization.DefaultToApiJsonSer
 import org.apache.fineract.infrastructure.core.serialization.JsonParserHelper;
 import org.apache.fineract.infrastructure.core.service.PagedLocalRequest;
 import org.apache.fineract.infrastructure.security.service.PlatformSecurityContext;
+import org.apache.fineract.portfolio.group.data.GroupGeneralData;
 import org.apache.fineract.portfolio.paymenttype.data.PaymentTypeData;
 import org.apache.fineract.portfolio.paymenttype.service.PaymentTypeReadPlatformService;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
@@ -66,6 +67,7 @@ import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformS
 import org.apache.fineract.portfolio.savings.service.search.SavingsAccountTransactionSearchService;
 import org.apache.fineract.portfolio.search.data.AdvancedQueryRequest;
 import org.apache.fineract.portfolio.search.data.TransactionSearchRequest;
+import org.apache.fineract.portfolio.group.service.GroupReadPlatformService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
@@ -83,6 +85,7 @@ public class SavingsAccountTransactionsApiResource {
     private final SavingsAccountReadPlatformService savingsAccountReadPlatformService;
     private final PaymentTypeReadPlatformService paymentTypeReadPlatformService;
     private final SavingsAccountTransactionSearchService transactionsSearchService;
+    private final GroupReadPlatformService groupReadPlatformService;
 
     private boolean is(final String commandParam, final String commandValue) {
         return StringUtils.isNotBlank(commandParam) && commandParam.trim().equalsIgnoreCase(commandValue);
@@ -194,8 +197,9 @@ public class SavingsAccountTransactionsApiResource {
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else if (is(commandParam, "withdrawal")) {
             final SavingsAccountData savingsAccount = savingsAccountReadPlatformService.retrieveOne(savingsId);
+            final GroupGeneralData group = groupReadPlatformService.retrieveOne(savingsAccount.getGroupId());
             final CommandWrapper commandRequest = builder.savingsAccountWithdrawal(savingsId,
-                    savingsAccount.getGroupGeneralData().officeId(),savingsAccount.getGroupId()).build();
+                    group.getOfficeId(),savingsAccount.getGroupId()).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else if (is(commandParam, "postInterestAsOn")) {
             final CommandWrapper commandRequest = builder.savingsAccountInterestPosting(savingsId).build();
