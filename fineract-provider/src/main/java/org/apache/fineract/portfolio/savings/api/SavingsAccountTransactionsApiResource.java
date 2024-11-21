@@ -195,7 +195,7 @@ public class SavingsAccountTransactionsApiResource {
         } else if (is(commandParam, "withdrawal")) {
             final SavingsAccountData savingsAccount = savingsAccountReadPlatformService.retrieveOne(savingsId);
             final CommandWrapper commandRequest = builder.savingsAccountWithdrawal(savingsId,
-                    savingsAccount.officeId(),savingsAccount.getGroupId()).build();
+                    savingsAccount.getOfficeId(),savingsAccount.getGroupId()).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else if (is(commandParam, "postInterestAsOn")) {
             final CommandWrapper commandRequest = builder.savingsAccountInterestPosting(savingsId).build();
