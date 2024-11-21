@@ -24,6 +24,7 @@ import org.apache.fineract.infrastructure.accountnumberformat.service.AccountNum
 import org.apache.fineract.portfolio.client.api.ClientApiConstants;
 import org.apache.fineract.portfolio.paymenttype.api.PaymentTypeApiResourceConstants;
 import org.apache.fineract.portfolio.savings.DepositsApiConstants;
+import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
 import org.apache.fineract.portfolio.self.pockets.api.PocketApiConstants;
 import org.apache.fineract.useradministration.api.PasswordPreferencesApiConstants;
 
@@ -1560,8 +1561,17 @@ public class CommandWrapperBuilder {
         this.savingsId = accountId;
         this.entityId = null;
         this.href = "/savingsaccounts/" + accountId + "/transactions";
-        this.officeId = 2L;
-        this.groupId = 10L;
+        return this;
+    }
+
+    public CommandWrapperBuilder savingsAccountWithdrawal(SavingsAccountData savingsAccount) {
+        this.actionName = "WITHDRAWAL";
+        this.entityName = "SAVINGSACCOUNT";
+        this.savingsId = savingsAccount.getId();
+        this.entityId = null;
+        this.href = "/savingsaccounts/" + savingsAccount.getId() + "/transactions";
+        this.groupId = savingsAccount.getGroupId();
+        this.officeId = savingsAccount.getOfficeId();
         return this;
     }
 

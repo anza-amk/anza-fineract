@@ -60,6 +60,7 @@ import org.apache.fineract.portfolio.paymenttype.data.PaymentTypeData;
 import org.apache.fineract.portfolio.paymenttype.service.PaymentTypeReadPlatformService;
 import org.apache.fineract.portfolio.savings.DepositAccountType;
 import org.apache.fineract.portfolio.savings.SavingsApiConstants;
+import org.apache.fineract.portfolio.savings.data.SavingsAccountData;
 import org.apache.fineract.portfolio.savings.data.SavingsAccountTransactionData;
 import org.apache.fineract.portfolio.savings.service.SavingsAccountReadPlatformService;
 import org.apache.fineract.portfolio.savings.service.search.SavingsAccountTransactionSearchService;
@@ -192,7 +193,8 @@ public class SavingsAccountTransactionsApiResource {
             final CommandWrapper commandRequest = builder.gsimSavingsAccountDeposit(savingsId).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else if (is(commandParam, "withdrawal")) {
-            final CommandWrapper commandRequest = builder.savingsAccountWithdrawal(savingsId).build();
+            final SavingsAccountData savingsAccount = savingsAccountReadPlatformService.retrieveOne(savingsId);
+            final CommandWrapper commandRequest = builder.savingsAccountWithdrawal(savingsAccount).build();
             result = this.commandsSourceWritePlatformService.logCommandSource(commandRequest);
         } else if (is(commandParam, "postInterestAsOn")) {
             final CommandWrapper commandRequest = builder.savingsAccountInterestPosting(savingsId).build();
