@@ -21,6 +21,7 @@ package org.apache.fineract.portfolio.loanaccount.service;
 import static org.apache.fineract.portfolio.loanaccount.domain.LoanTransactionType.REPAYMENT;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.fineract.infrastructure.core.service.MathUtil;
 import org.apache.fineract.organisation.monetary.domain.MonetaryCurrency;
 import org.apache.fineract.organisation.monetary.domain.Money;
 import org.apache.fineract.portfolio.loanaccount.domain.ChangedTransactionDetail;
@@ -59,7 +61,7 @@ public class ProgressiveLoanInterestRefundServiceImpl implements InterestRefundS
             List<LoanTransaction> collect) {
         collect.add(new LoanTransaction(lt.getLoan(), lt.getLoan().getOffice(), lt.getTypeOf().getValue(), lt.getDateOf(), lt.getAmount(),
                 BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, false, null, null));
-        if (lt.getTypeOf().isDisbursement() && refundFinal.get().compareTo(BigDecimal.ZERO) > 0) {
+        if (lt.getTypeOf().isDisbursement() && MathUtil.isGreaterThanZero(refundFinal.get())) {
             if (lt.getAmount().compareTo(refundFinal.get()) <= 0) {
                 collect.add(
                         new LoanTransaction(lt.getLoan(), lt.getLoan().getOffice(), REPAYMENT.getValue(), lt.getDateOf(), lt.getAmount(),
@@ -96,7 +98,7 @@ public class ProgressiveLoanInterestRefundServiceImpl implements InterestRefundS
     }
 
     private boolean isTransactionNeededForInterestRefundCalculations(LoanTransaction lt) {
-        return lt.isNotReversed() && !lt.isAccrual() && !lt.isAccrualActivity() && !lt.isInterestRefund();
+        return lt.isNotReversed() && !lt.isAccrualRelated() && !lt.isInterestRefund();
     }
 
     @Override
@@ -135,9 +137,13 @@ public class ProgressiveLoanInterestRefundServiceImpl implements InterestRefundS
     }
 
     @Override
-    public Money getTotalInterestRefunded(List<LoanTransaction> loanTransactions, MonetaryCurrency currency) {
-        return Money.of(currency, loanTransactions.stream().filter(LoanTransaction::isNotReversed).filter(LoanTransaction::isInterestRefund)
-                .map(LoanTransaction::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
+    public Money getTotalInterestRefunded(List<LoanTransaction> loanTransactions, MonetaryCurrency currency, MathContext mc) {
+        final BigDecimal totalInterestRefunded = loanTransactions.stream() //
+                .filter(LoanTransaction::isNotReversed) //
+                .filter(LoanTransaction::isInterestRefund) //
+                .map(LoanTransaction::getAmount) //
+                .reduce(BigDecimal.ZERO, BigDecimal::add); //
+        return Money.of(currency, totalInterestRefunded, mc);
     }
 
 }

@@ -20,9 +20,12 @@ package org.apache.fineract.infrastructure.core.persistence;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.FlushModeType;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.jdbc.datasource.JdbcTransactionObjectSupport;
 import org.springframework.orm.jpa.EntityManagerHolder;
 import org.springframework.orm.jpa.JpaTransactionManager;
@@ -41,7 +44,7 @@ public class ExtendedJpaTransactionManager extends JpaTransactionManager {
     @Override
     protected void doBegin(Object transaction, TransactionDefinition definition) {
         super.doBegin(transaction, definition);
-        if (isReadOnlyTx(transaction)) {
+        if (isReadOnlyConnection() || isReadOnlyTx(transaction)) {
             EntityManager entityManager = getCurrentEntityManager();
             if (entityManager != null) {
                 entityManager.setFlushMode(FlushModeType.COMMIT);
@@ -52,7 +55,7 @@ public class ExtendedJpaTransactionManager extends JpaTransactionManager {
 
     @Override
     protected void doCommit(DefaultTransactionStatus status) {
-        if (isReadOnlyTx(status.getTransaction())) {
+        if (isReadOnlyConnection() || isReadOnlyTx(status.getTransaction())) {
             EntityManager entityManager = getCurrentEntityManager();
             if (entityManager != null) {
                 entityManager.clear();
@@ -60,6 +63,17 @@ public class ExtendedJpaTransactionManager extends JpaTransactionManager {
         }
         super.doCommit(status);
         invokeLifecycleCallbacks(TransactionLifecycleCallback::afterCommit);
+    }
+
+    public boolean isReadOnlyConnection() {
+        Connection connection = DataSourceUtils.getConnection(getDataSource());
+        try {
+            return connection.isReadOnly();
+        } catch (SQLException e) {
+            throw new IllegalStateException(e);
+        } finally {
+            DataSourceUtils.releaseConnection(connection, getDataSource());
+        }
     }
 
     @Override
