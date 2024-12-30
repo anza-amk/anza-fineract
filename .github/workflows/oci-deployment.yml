@@ -98,7 +98,7 @@ jobs:
           
           helm upgrade cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.12.0 --set installCRDs=true
           
-          helm upgrade \
+          helm install \
           --set fineract.image="ghcr.io/${{ github.repository }}/$IMAGE:latest" \
           --set fineract.env.FINERACT_SERVER_PORT=${{ secrets.FINERACT_SERVER_PORT }} \
           --set fineract.env.FINERACT_NODE_ID="${{ secrets.FINERACT_NODE_ID }}" \
